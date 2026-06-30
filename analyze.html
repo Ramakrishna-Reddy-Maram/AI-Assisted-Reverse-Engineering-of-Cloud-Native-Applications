@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Run the Analyzer — AI-Assisted Reverse Engineering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EAE4D3; --paper-dim:#DED6BF; --paper-deep:#E3DBC4;
+    --ink:#201D17; --ink-soft:#4A4538; --pencil:#86806E;
+    --red:#A8341F; --highlight:#D8B23A; --rule:#C9BFA2; --good:#3C6B4A;
+    --mono:'IBM Plex Mono',monospace; --head:'IBM Plex Sans Condensed',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:15px;line-height:1.6;}
+  .wrap{max-width:980px;margin:0 auto;padding:0 28px;}
+  a{color:var(--red);}
+
+  header.masthead{border-bottom:3px double var(--ink);padding:18px 0 12px;}
+  .masthead-row{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;}
+  .case-no{font-size:12px;letter-spacing:.08em;color:var(--pencil);text-transform:uppercase;}
+  .case-no a{color:var(--pencil);text-decoration:none;border-bottom:1px dotted var(--pencil);}
+  .date-stamp{font-size:12px;color:var(--pencil);text-transform:uppercase;letter-spacing:.08em;}
+
+  .hero{padding:48px 0 30px;}
+  .eyebrow{font-family:var(--head);font-weight:600;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--red);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .eyebrow::before{content:"";width:26px;height:2px;background:var(--red);display:inline-block;}
+  h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,4.4vw,42px);line-height:1.08;letter-spacing:-.01em;max-width:780px;}
+  .subhead{font-size:15.5px;color:var(--ink-soft);max-width:620px;margin-top:16px;}
+
+  section{padding:40px 0;border-top:1px solid var(--rule);}
+  .section-head{display:flex;align-items:baseline;gap:14px;margin-bottom:24px;}
+  .tag{font-family:var(--head);font-weight:700;font-size:12px;letter-spacing:.1em;color:var(--paper);background:var(--ink);padding:4px 9px;}
+  h2{font-family:var(--head);font-weight:700;font-size:22px;letter-spacing:-.01em;}
+
+  /* config panel */
+  .panel{border:1.5px solid var(--ink);background:var(--paper-dim);padding:24px;}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--pencil);margin-bottom:7px;font-weight:600;}
+  .field .hint{font-size:12px;color:var(--pencil);margin-top:6px;line-height:1.5;}
+  input[type=password], input[type=text], select{
+    width:100%;background:var(--paper);border:1.5px solid var(--ink);padding:10px 12px;font-family:var(--mono);font-size:13.5px;color:var(--ink);
+  }
+  input[type=password]:focus, input[type=text]:focus, select:focus, textarea:focus{outline:2px solid var(--red); outline-offset:1px;}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 18px) center,calc(100% - 13px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+
+  .keyrow{display:flex;gap:10px;align-items:flex-end;}
+  .keyrow .field{flex:1;margin-bottom:0;}
+
+  /* tabs */
+  .tabs{display:flex;border-bottom:1.5px solid var(--ink);margin-bottom:0;}
+  .tab-btn{
+    font-family:var(--head);font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+    padding:10px 18px;background:none;border:none;cursor:pointer;color:var(--pencil);border-bottom:2px solid transparent;margin-bottom:-1.5px;
+  }
+  .tab-btn.active{color:var(--ink);border-bottom-color:var(--red);}
+  .tab-panel{display:none;border:1.5px solid var(--ink);border-top:none;background:var(--paper-deep);padding:18px;}
+  .tab-panel.active{display:block;}
+
+  textarea{
+    width:100%;min-height:260px;background:var(--paper-deep);border:1px solid var(--rule);padding:14px;
+    font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--ink);resize:vertical;
+  }
+  textarea:focus{outline:2px solid var(--red);outline-offset:1px;border-color:var(--ink);}
+
+  .dropzone{
+    border:2px dashed var(--rule);padding:46px 20px;text-align:center;cursor:pointer;background:var(--paper-deep);
+    transition:border-color .15s;
+  }
+  .dropzone:hover, .dropzone.drag{border-color:var(--red);}
+  .dropzone .dz-title{font-family:var(--head);font-weight:600;font-size:15px;color:var(--ink);}
+  .dropzone .dz-sub{font-size:12.5px;color:var(--pencil);margin-top:6px;}
+  .file-chip{display:inline-flex;align-items:center;gap:8px;margin-top:14px;background:var(--ink);color:var(--paper);font-size:12px;padding:6px 12px;}
+  .file-chip button{background:none;border:none;color:var(--paper);cursor:pointer;font-family:var(--mono);font-weight:700;}
+
+  .run-row{display:flex;align-items:center;gap:16px;margin-top:22px;flex-wrap:wrap;}
+  .run-btn{
+    font-family:var(--head);font-weight:700;font-size:14px;letter-spacing:.04em;text-transform:uppercase;
+    background:var(--ink);color:var(--paper);border:1.5px solid var(--ink);padding:13px 28px;cursor:pointer;
+  }
+  .run-btn:hover{background:var(--red);border-color:var(--red);}
+  .run-btn:disabled{opacity:.4;cursor:not-allowed;background:var(--ink);}
+  .fn-count{font-size:12.5px;color:var(--pencil);}
+  .err-box{margin-top:16px;border:1.5px solid var(--red);background:#A8341F14;color:var(--red);padding:12px 14px;font-size:13px;display:none;}
+  .err-box.show{display:block;}
+
+  /* progress */
+  .progress-wrap{margin-top:24px;display:none;}
+  .progress-wrap.show{display:block;}
+  .progress-track{height:6px;background:var(--paper-dim);border:1px solid var(--ink);}
+  .progress-fill{height:100%;background:var(--red);width:0%;transition:width .25s;}
+  .progress-label{font-size:12px;color:var(--pencil);margin-top:8px;}
+
+  /* results */
+  #results{margin-top:36px;}
+  .readout{border:1.5px solid var(--ink);background:var(--paper-dim);display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:32px;}
+  .readout .stat{padding:18px 16px;border-right:1px solid var(--rule);}
+  .readout .stat:last-child{border-right:none;}
+  .readout .stat .num{font-family:var(--head);font-weight:700;font-size:28px;}
+  .readout .stat .num.red{color:var(--red);}
+  .readout .stat .label{margin-top:6px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--pencil);}
+
+  .finding{border:1.5px solid var(--ink);margin-bottom:22px;background:var(--paper-dim);}
+  .finding-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--rule);}
+  .finding-head .fname{font-family:var(--head);font-weight:700;font-size:15px;}
+  .finding-head .meta{display:flex;gap:10px;align-items:center;font-size:11.5px;color:var(--pencil);}
+  .chip{padding:3px 9px;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;}
+  .chip.issues{background:var(--red);color:var(--paper);}
+  .chip.clean{background:var(--good);color:var(--paper);}
+  .chip.complexity{border:1px solid var(--ink);color:var(--ink);}
+  .finding-body{padding:18px;}
+  .finding-body .summary{font-size:13.5px;color:var(--ink-soft);margin-bottom:14px;line-height:1.6;}
+  .issue-list{list-style:none;}
+  .issue-list li{position:relative;padding-left:18px;margin-bottom:9px;font-size:13px;color:var(--ink-soft);line-height:1.5;}
+  .issue-list li::before{content:"✕";position:absolute;left:0;top:1px;color:var(--red);font-size:11px;font-weight:700;}
+  .no-issues{font-size:13px;color:var(--good);display:flex;align-items:center;gap:8px;}
+  .fn-error{padding:18px;font-size:13px;color:var(--red);}
+  .logic-toggle{font-size:12px;color:var(--pencil);text-decoration:underline;cursor:pointer;margin-top:10px;display:inline-block;background:none;border:none;font-family:var(--mono);}
+  .logic-box{display:none;margin-top:10px;font-size:12.5px;color:var(--ink-soft);background:var(--paper-deep);padding:12px;border:1px solid var(--rule);}
+  .logic-box.show{display:block;}
+
+  footer{padding:40px 0 60px;border-top:3px double var(--ink);font-size:12px;color:var(--pencil);}
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--rule);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap masthead-row">
+    <div class="case-no"><a href="index.html">← Back to report</a></div>
+    <div class="date-stamp">Live Analyzer</div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Run It Yourself</div>
+    <h1>Paste your C source. Get the findings back in seconds.</h1>
+    <p class="subhead">This runs the same pipeline as the report — function extraction, a Groq LLaMA 3 call per function, structured JSON findings — directly in your browser against your own Groq API key. Nothing is uploaded to a server; the request goes straight from your browser to Groq.</p>
+  </div>
+</section>
+
+<section id="setup">
+  <div class="wrap">
+    <div class="section-head"><span class="tag">01</span><h2>Connect</h2></div>
+    <div class="panel">
+      <div class="keyrow">
+        <div class="field">
+          <label for="apiKey">Groq API Key</label>
+          <input type="password" id="apiKey" placeholder="gsk_..." autocomplete="off">
+          <div class="hint">Stored only in this browser tab's memory — never sent anywhere but Groq's API, and gone when you close the page. Get a free key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.</div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:16px;">
+        <label for="model">Model</label>
+        <select id="model">
+          <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+          <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (faster, less thorough)</option>
+          <option value="llama3-70b-8192">llama3-70b-8192 (legacy)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="input">
+  <div class="wrap">
+    <div class="section-head"><span class="tag">02</span><h2>Provide the source</h2></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="paste">Paste Code</button>
+      <button class="tab-btn" data-tab="upload">Upload File</button>
+    </div>
+    <div class="tab-panel active" id="tab-paste">
+      <textarea id="codeInput" placeholder="// Paste C source here, e.g.
+
+int authenticate_user(char *user, char *pass) {
+    unsigned long h = simple_hash(pass);
+    if (strcmp(stored_hash, h) == 0) {
+        return AUTH_OK;
+    }
+    return AUTH_FAIL;
+}"></textarea>
+    </div>
+    <div class="tab-panel" id="tab-upload">
+      <div class="dropzone" id="dropzone">
+        <div class="dz-title">Drop a .c / .h file here, or click to browse</div>
+        <div class="dz-sub">The file is read locally — nothing leaves your browser until you hit Run.</div>
+        <input type="file" id="fileInput" accept=".c,.h,.txt,.cpp" style="display:none;">
+      </div>
+      <div id="fileChipWrap"></div>
+    </div>
+
+    <div class="run-row">
+      <button class="run-btn" id="runBtn">Run Analysis</button>
+      <span class="fn-count" id="fnCount"></span>
+    </div>
+    <div class="err-box" id="errBox"></div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">Extracting functions…</div>
+    </div>
+  </div>
+</section>
+
+<section id="output">
+  <div class="wrap">
+    <div class="section-head"><span class="tag">03</span><h2>Findings</h2></div>
+    <div id="results"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Pipeline mirrors <code>start.py</code>: regex function extraction → per-function Groq call (temperature 0.1, structured JSON) → rendered findings. Cross-function issues (call-graph-dependent bugs) are out of scope for this single-pass mode, same as the original report notes.
+  </div>
+</footer>
+
+<script>
+(function(){
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+  tabBtns.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      tabBtns.forEach(b=>b.classList.remove('active'));
+      tabPanels.forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileChipWrap = document.getElementById('fileChipWrap');
+  let uploadedCode = null;
+  let uploadedName = null;
+
+  dropzone.addEventListener('click', ()=>fileInput.click());
+  dropzone.addEventListener('dragover', e=>{e.preventDefault(); dropzone.classList.add('drag');});
+  dropzone.addEventListener('dragleave', ()=>dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e=>{
+    e.preventDefault(); dropzone.classList.remove('drag');
+    if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e=>{
+    if(e.target.files.length) handleFile(e.target.files[0]);
+  });
+  function handleFile(file){
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      uploadedCode = reader.result;
+      uploadedName = file.name;
+      fileChipWrap.innerHTML = `<div class="file-chip">${file.name} (${(file.size/1024).toFixed(1)} KB)<button id="clearFile">✕</button></div>`;
+      document.getElementById('clearFile').addEventListener('click', ()=>{
+        uploadedCode=null; uploadedName=null; fileChipWrap.innerHTML=''; fileInput.value='';
+      });
+    };
+    reader.readAsText(file);
+  }
+
+  // ---- C function extractor — ported 1:1 from start.py STAGE 1 ----
+  function extractFunctions(src){
+    const found = []; // ordered list of {name, code}
+    const seen = new Set();
+    const skipNames = new Set(['if','while','for','switch','return','else']);
+
+    // Primary pattern: (?:^|\n)(?!#|//)((?:[\w*]+\s+)+)(\w+)\s*\([^;]*?\)\s*\{   (multiline)
+    const pattern = /(?:^|\n)(?!#|\/\/)((?:[\w*]+\s+)+)(\w+)\s*\([^;]*?\)\s*\{/gm;
+    let m;
+    while((m = pattern.exec(src)) !== null){
+      const name = m[2];
+      if(skipNames.has(name)) continue;
+      const braceStart = src.indexOf('{', m.index);
+      if(braceStart === -1) continue;
+      let depth = 0, end = braceStart;
+      for(let i = braceStart; i < src.length; i++){
+        if(src[i] === '{') depth++;
+        else if(src[i] === '}'){ depth--; if(depth === 0){ end = i+1; break; } }
+      }
+      const codeStart = m.index + (m[0].startsWith('\n') ? 1 : 0);
+      const code = src.slice(codeStart, end);
+      if(code.length > 50 && !seen.has(name)){
+        seen.add(name);
+        found.push({name, code});
+      }
+    }
+
+    if(found.length === 0){
+      // Fallback: line-by-line brace-depth scan, same as start.py's fallback
+      const lines = src.split('\n');
+      let curFunc = null, curCode = [], braceDepth = 0;
+      for(const line of lines){
+        const stripped = line.trim();
+        if(braceDepth === 0 && stripped.includes('(') && stripped.includes(')') && stripped.includes('{')
+           && !stripped.startsWith('#') && !stripped.startsWith('//')){
+          const words = stripped.replace(/\(/g,' ').split(/\s+/).filter(Boolean);
+          if(words.length >= 2){
+            let name = words[words.length-1].replace(/[({]/g,'');
+            if(name && /^[A-Za-z_]\w*$/.test(name)){
+              curFunc = name;
+              curCode = [line];
+              braceDepth = (stripped.match(/\{/g)||[]).length - (stripped.match(/\}/g)||[]).length;
+              continue;
+            }
+          }
+        }
+        if(curFunc){
+          curCode.push(line);
+          braceDepth += (stripped.match(/\{/g)||[]).length - (stripped.match(/\}/g)||[]).length;
+          if(braceDepth <= 0){
+            const code = curCode.join('\n');
+            if(code.length > 50 && !seen.has(curFunc)){
+              seen.add(curFunc);
+              found.push({name: curFunc, code});
+            }
+            curFunc = null; curCode = []; braceDepth = 0;
+          }
+        }
+      }
+    }
+    // start.py caps each function's code at 3000 chars before sending to the model
+    return found.map(f => ({ name: f.name, body: f.code.slice(0, 3000) }));
+  }
+
+  const codeInput = document.getElementById('codeInput');
+  const runBtn = document.getElementById('runBtn');
+  const fnCount = document.getElementById('fnCount');
+  const errBox = document.getElementById('errBox');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const results = document.getElementById('results');
+
+  function getActiveCode(){
+    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+    if(activeTab === 'upload') return uploadedCode || '';
+    return codeInput.value;
+  }
+
+  function showError(msg){
+    errBox.textContent = msg;
+    errBox.classList.add('show');
+  }
+  function clearError(){
+    errBox.classList.remove('show'); errBox.textContent='';
+  }
+
+  const MANUAL_TIMES = { low: 5, medium: 25, high: 90, unknown: 20 }; // seconds->minutes baseline, mirrors start.py
+  const TYPE_COLORS = {
+    authentication: '#9c27b0', security: '#f44336', networking: '#2196f3',
+    data_processing: '#00bcd4', utility: '#607d8b', configuration: '#4caf50',
+    memory_management: '#ff9800', unknown: '#78909c'
+  };
+
+  const SYSTEM_PROMPT = "You are an expert reverse engineer analyzing C source code. Return ONLY valid JSON, no markdown fences.";
+
+  function buildUserPrompt(name, code){
+    return `Analyze this C function from a cloud-native application.
+
+Function Name: ${name}
+
+Code:
+${code.slice(0,3000)}
+
+Return ONLY this JSON (no markdown, no extra text):
+{
+  "summary": "1-2 sentence plain English description",
+  "component_type": "authentication|data_processing|networking|memory_management|utility|configuration|security|unknown",
+  "security_issues": ["list issues or empty list"],
+  "logic_reconstruction": "step by step logic",
+  "complexity": "low|medium|high",
+  "notable_patterns": ["observations"]
+}`;
+  }
+
+  async function analyzeFunction(fn, apiKey, model){
+    const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model: model,
+        temperature: 0.1,
+        max_tokens: 1024,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: buildUserPrompt(fn.name, fn.body) }
+        ]
+      })
+    });
+    if(!resp.ok){
+      let detail = '';
+      try{ const j = await resp.json(); detail = j.error?.message || JSON.stringify(j); }catch(e){}
+      throw new Error(`HTTP ${resp.status}${detail ? ' — ' + detail : ''}`);
+    }
+    const data = await resp.json();
+    let raw = (data.choices?.[0]?.message?.content || '').trim();
+    if(raw.startsWith('```')){
+      raw = raw.split('```')[1];
+      if(raw.startsWith('json')) raw = raw.slice(4);
+    }
+    return JSON.parse(raw.trim());
+  }
+
+  function renderReadout(allResults){
+    const ok = allResults.filter(r=>!r.error);
+    const total = allResults.length;
+    const issueTotal = ok.reduce((s,r)=> s + (r.data.security_issues||[]).length, 0);
+    const errCount = allResults.filter(r=>r.error).length;
+    const manualSecondsTotal = ok.reduce((s,r)=> s + (MANUAL_TIMES[(r.data.complexity||'unknown').toLowerCase()] ?? 20) * 60, 0);
+    const aiSecondsTotal = ok.reduce((s,r)=> s + (r.elapsed||0), 0);
+    const speedup = aiSecondsTotal > 0 ? (manualSecondsTotal/aiSecondsTotal) : 0;
+    const hoursSaved = (manualSecondsTotal - aiSecondsTotal) / 3600;
+    results.insertAdjacentHTML('afterbegin', `
+      <div class="readout">
+        <div class="stat"><div class="num">${total}</div><div class="label">Functions Analyzed</div></div>
+        <div class="stat"><div class="num red">${issueTotal}</div><div class="label">Security Issues Found</div></div>
+        <div class="stat"><div class="num">${speedup.toFixed(0)}×</div><div class="label">Speedup vs. Manual Est.</div></div>
+        <div class="stat"><div class="num">${hoursSaved.toFixed(1)}h</div><div class="label">Hours Saved</div></div>
+      </div>
+    `);
+  }
+
+  function renderFinding(fn, data, elapsed){
+    const issues = data.security_issues || [];
+    const patterns = data.notable_patterns || [];
+    const hasIssues = issues.length > 0;
+    const ctype = (data.component_type || 'unknown');
+    const color = TYPE_COLORS[ctype] || TYPE_COLORS.unknown;
+    const id = 'logic_' + Math.random().toString(36).slice(2,9);
+    const html = `
+      <div class="finding">
+        <div class="finding-head">
+          <span class="fname">${escapeHtml(fn.name)}()</span>
+          <span class="meta">
+            <span class="chip complexity" style="border-color:${color};color:${color};">${escapeHtml(ctype)}</span>
+            <span class="chip complexity">${escapeHtml(data.complexity||'—')}</span>
+            <span class="chip ${hasIssues?'issues':'clean'}">${hasIssues ? issues.length+' issues' : '0 issues'}</span>
+            ${elapsed!=null ? `<span style="color:var(--pencil);">${elapsed.toFixed(1)}s</span>` : ''}
+          </span>
+        </div>
+        <div class="finding-body">
+          <div class="summary">${escapeHtml(data.summary||'')}</div>
+          ${hasIssues
+            ? `<ul class="issue-list">${issues.map(i=>`<li>${escapeHtml(i)}</li>`).join('')}</ul>`
+            : `<div class="no-issues">✓ No issues detected</div>`
+          }
+          ${patterns.length ? `<div class="summary" style="margin-top:10px;"><b>Notable patterns:</b> ${patterns.map(escapeHtml).join('; ')}</div>` : ''}
+          <button class="logic-toggle" onclick="document.getElementById('${id}').classList.toggle('show')">Show control flow reconstruction</button>
+          <div class="logic-box" id="${id}">${escapeHtml(data.logic_reconstruction||'')}</div>
+        </div>
+      </div>`;
+    results.insertAdjacentHTML('beforeend', html);
+  }
+
+  function renderFnError(fn, msg){
+    results.insertAdjacentHTML('beforeend', `
+      <div class="finding">
+        <div class="finding-head"><span class="fname">${escapeHtml(fn.name)}()</span></div>
+        <div class="fn-error">Failed: ${escapeHtml(msg)}</div>
+      </div>`);
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  runBtn.addEventListener('click', async ()=>{
+    clearError();
+    results.innerHTML = '';
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const model = document.getElementById('model').value;
+    const src = getActiveCode();
+
+    if(!apiKey){ showError('Enter your Groq API key first.'); return; }
+    if(!src || !src.trim()){ showError('Paste some C source or upload a file first.'); return; }
+
+    const fns = extractFunctions(src);
+    if(fns.length === 0){ showError('No function definitions found. Check the source — the extractor looks for standard C function signatures.'); return; }
+
+    fnCount.textContent = `${fns.length} function${fns.length>1?'s':''} found`;
+    runBtn.disabled = true;
+    progressWrap.classList.add('show');
+
+    const allResults = [];
+    for(let i=0; i<fns.length; i++){
+      const fn = fns[i];
+      progressLabel.innerHTML = `<span class="spinner"></span>Analyzing ${escapeHtml(fn.name)}() — ${i+1} of ${fns.length}`;
+      progressFill.style.width = `${Math.round((i/fns.length)*100)}%`;
+      const t0 = performance.now();
+      try{
+        const data = await analyzeFunction(fn, apiKey, model);
+        const elapsed = (performance.now() - t0) / 1000;
+        allResults.push({fn, data, elapsed, error:false});
+      }catch(err){
+        allResults.push({fn, error:true, message: err.message});
+      }
+      await new Promise(r=>setTimeout(r, 300));
+    }
+    progressFill.style.width = '100%';
+    progressLabel.textContent = `Done — ${fns.length} function${fns.length>1?'s':''} analyzed`;
+
+    renderReadout(allResults);
+    allResults.forEach(r=>{
+      if(r.error) renderFnError(r.fn, r.message);
+      else renderFinding(r.fn, r.data, r.elapsed);
+    });
+
+    runBtn.disabled = false;
+    setTimeout(()=>progressWrap.classList.remove('show'), 1500);
+  });
+})();
+</script>
+
+</body>
+</html>
